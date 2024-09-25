@@ -1,2 +1,16 @@
 underground
 
+パッケージ管理: yarn
+
+package.json ファイルに "type": "module" を追加：
+{
+  "type": "module",
+  // 他の設定...
+}
+
+
+mkdir -p src/plugins data/source/html data/source/json
+
+
+npm install cheerio -y
+
