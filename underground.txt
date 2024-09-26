@@ -14,3 +14,7 @@ mkdir -p src/plugins data/source/html data/source/json
 
 npm install cheerio -y
 
+git add -f public/board_data.json 
+git commit -m "add public/board_data.json"
+git update-index --assume-unchanged public/board_data.json
+
