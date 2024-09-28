@@ -8,9 +8,7 @@ package.json ファイルに "type": "module" を追加：
   // 他の設定...
 }
 
-
 mkdir -p src/plugins data/source/html data/source/json
-
 
 npm install cheerio -y
 
@@ -18,3 +16,24 @@ git add -f public/board_data.json
 git commit -m "add public/board_data.json"
 git update-index --assume-unchanged public/board_data.json
 
+
+Node.js Email App
+jtvh ypyg pgoh fwpz
+
+
+■TODO
+・メールアドレスでログインする仕組み
+  ・パスワード不要な、メールアドレス認証＝ログインのような簡易的な方法がいい
+  ・課金を考えているので、URL共有で意図せず多重ログインになりにくい仕組み
+  ・よって、URLにメールアドレスを持ち回る仕組みはNG
+  ・セッション管理がCookie、期間は1ヶ月
+  ・トップ画面はログイン画面（＝メールアドレス登録画面）
+  ・事前登録済みユーザのみ使用可能
+  ・
+
+
+
+あなたは優秀なプログラマです。
+私はLinux上でnode.jsを用いたプログラミングをしています。
+
+node.js + expressを用いて、ユーザ認証、Cookieによるセッション管理するシステムを作りたいです。
