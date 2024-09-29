@@ -24,6 +24,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // トランスポーターの作成
+    // user: "justanother893@gmail.com", // あなたのGmailアドレス
+    // pass: "jtvh ypyg pgoh fwpz" // あなたのGmailパスワードまたはアプリパスワード
+
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
