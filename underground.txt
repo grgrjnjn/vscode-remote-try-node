@@ -23,16 +23,22 @@ Node.js Email App
 export EMAIL_USER="justanother893@gmail.com"
 export EMAIL_PASS="jtvh ypyg pgoh fwpz"
 
+export BASE_URL="https://fluffy-giggle-gx9rjvpqq3vj4w-3000.app.github.dev"
+export BASE_URL="https://ik1-447-55534.vs.sakura.ne.jp"
 
-■TODO
+
+
 ・メールアドレスでログインする仕組み
   ・パスワード不要な、メールアドレス認証＝ログインのような簡易的な方法がいい
   ・課金を考えているので、URL共有で意図せず多重ログインになりにくい仕組み
   ・よって、URLにメールアドレスを持ち回る仕組みはNG
   ・セッション管理がCookie、期間は1ヶ月
   ・トップ画面はログイン画面（＝メールアドレス登録画面）
+
+
+■TODO
   ・事前登録済みユーザのみ使用可能
-  ・
+  ・課金
 
 
 
