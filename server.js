@@ -10,8 +10,9 @@
 
 // メールを送付し、メール記載のURLをクリックしたらログイン済みとしてセッション管理する仕組みを提案してください。
 
+// veiwを使用
 
-// server2.js
+// server.js
 import express from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -19,6 +20,8 @@ import { fileURLToPath } from 'url';
 import session from 'express-session';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import ejs from 'ejs';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,6 +39,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/image', express.static(path.join(__dirname, 'public', 'image')));
 
+// テンプレートエンジンの設定（HTMLを直接使用する場合）
+app.engine('html', ejs.renderFile);
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 app.use(session({
     secret: '79e661aead4136d90276c464cf8f7366',
@@ -111,88 +118,14 @@ app.get('/', (req, res) => {
 
 
 app.get('/email-login', (req, res) => {
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ログイン</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .login-container {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 350px;
-        }
-        h1 {
-            text-align: center;
-            color: #1877f2;
-            margin-bottom: 1.5rem;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        input[type="email"] {
-            padding: 0.8rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        button {
-            padding: 0.8rem;
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #166fe5;
-        }
-        .message {
-            text-align: center;
-            margin-top: 1rem;
-            color: #606770;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <h1>ログイン</h1>
-        <form action="/login" method="POST" enctype="application/x-www-form-urlencoded">
-            <input type="email" name="email" placeholder="メールアドレス" required>
-            <button type="submit">ログインリンクを送信</button>
-        </form>
-        <p class="message">ログインリンクをメールで送信します。</p>
-    </div>
-</body>
-</html>
-    `;
-  
-    res.send(htmlContent);
-  });
+    res.render('email-login');
+});
+
 
 
 
 // 掲示板を表示
-app.get('/board', async (req, res) => {
+app.get('/__board', async (req, res) => {
   try {
     const filePath = path.join(__dirname, 'public', 'board_data.json');
     const data = await fs.readFile(filePath, 'utf8');
@@ -312,6 +245,19 @@ app.get('/board', async (req, res) => {
     console.error('Error reading file:', error);
     res.status(500).send('Error reading board data');
   }
+});
+
+app.get('/board', async (req, res) => {
+    try {
+      const filePath = path.join(__dirname, 'public', 'board_data.json');
+      const data = await fs.readFile(filePath, 'utf8');
+      const jsonData = JSON.parse(data);
+  
+      res.render('board', { posts: jsonData });
+    } catch (error) {
+      console.error('Error reading file:', error);
+      res.status(500).send('Error reading board data');
+    }
 });
 
 app.listen(PORT, HOST);
