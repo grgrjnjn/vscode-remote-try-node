@@ -1,15 +1,24 @@
 
 // /(ルート) は、404エラーを返す
-// /bbf40df4d83622e1846b5ddd5cf5d7e4 で掲示板を表示する
+// /board で掲示板を表示する
 
-// https://fluffy-giggle-gx9rjvpqq3vj4w-3000.app.github.dev/bbf40df4d83622e1846b5ddd5cf5d7e4
+// https://fluffy-giggle-gx9rjvpqq3vj4w-3000.app.github.dev/board
 
 
-// server.js
+// /email-login
+// に、「メールアドレス入力欄」と「ログイン」ボタンだけのスマホ向けに最適化されたシンプルで綺麗なページを作る。
+
+// メールを送付し、メール記載のURLをクリックしたらログイン済みとしてセッション管理する仕組みを提案してください。
+
+
+// server2.js
 import express from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import session from 'express-session';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,10 +27,74 @@ const app = express();
 const PORT = 3000;
 const HOST = '0.0.0.0';
 
+const tokens = {};
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // 静的ファイルの提供を設定
 app.use(express.static('public'));
 app.use('/image', express.static(path.join(__dirname, 'public', 'image')));
 
+
+app.use(session({
+    secret: '79e661aead4136d90276c464cf8f7366',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+}));
+
+app.post('/login', async (req, res) => {
+    const email = req.body.email;
+    const token = crypto.randomBytes(32).toString('hex');
+    tokens[token] = email;
+    
+    const loginLink = `http://fluffy-giggle-gx9rjvpqq3vj4w-3000.app.github.dev/auth?token=${token}`;
+  
+    // メールオプションの設定
+    let mailOptions = {
+      from: '"roku" <justanother893@gmail.com>',
+      to: email,
+      subject: "ログインリンク",
+      text: `以下のリンクをクリックしてログインしてください: ${loginLink}`,
+      html: `<p>以下のリンクをクリックしてログインしてください:</p><a href="${loginLink}">${loginLink}</a>`
+    };
+  
+    try {
+      // メール送信
+      await transporter.sendMail(mailOptions);
+      res.send('ログインリンクをメールで送信しました。メールをご確認ください。');
+    } catch (error) {
+      console.error('メール送信エラー:', error);
+      res.status(500).send('メールの送信に失敗しました。しばらくしてから再度お試しください。');
+    }
+});
+
+
+// トランスポーターの作成
+let transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // TLS を使用
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+});
+
+app.get('/auth', (req, res) => {
+    const token = req.query.token;
+    const email = tokens[token];
+    
+    if (email) {
+      req.session.user = email;
+      delete tokens[token];
+      res.redirect('/board');
+    } else {
+      res.status(400).send('Invalid token');
+    }
+});
+  
 function escapeHtml(unsafe) {
     return unsafe
          .replace(/&/g, "&amp;")
@@ -36,8 +109,90 @@ app.get('/', (req, res) => {
   res.status(404).send('404 Not Found');
 });
 
-// /bbf40df4d83622e1846b5ddd5cf5d7e4 で掲示板を表示
-app.get('/bbf40df4d83622e1846b5ddd5cf5d7e4', async (req, res) => {
+
+app.get('/email-login', (req, res) => {
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 350px;
+        }
+        h1 {
+            text-align: center;
+            color: #1877f2;
+            margin-bottom: 1.5rem;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input[type="email"] {
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            padding: 0.8rem;
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #166fe5;
+        }
+        .message {
+            text-align: center;
+            margin-top: 1rem;
+            color: #606770;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>ログイン</h1>
+        <form action="/login" method="POST" enctype="application/x-www-form-urlencoded">
+            <input type="email" name="email" placeholder="メールアドレス" required>
+            <button type="submit">ログインリンクを送信</button>
+        </form>
+        <p class="message">ログインリンクをメールで送信します。</p>
+    </div>
+</body>
+</html>
+    `;
+  
+    res.send(htmlContent);
+  });
+
+
+
+// 掲示板を表示
+app.get('/board', async (req, res) => {
   try {
     const filePath = path.join(__dirname, 'public', 'board_data.json');
     const data = await fs.readFile(filePath, 'utf8');
