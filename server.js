@@ -1,3 +1,11 @@
+
+// /(ルート) は、404エラーを返す
+// /bbf40df4d83622e1846b5ddd5cf5d7e4 で掲示板を表示する
+
+// https://fluffy-giggle-gx9rjvpqq3vj4w-3000.app.github.dev/bbf40df4d83622e1846b5ddd5cf5d7e4
+
+
+// server.js
 import express from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -23,7 +31,13 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-app.get('/', async (req, res) => {
+// ルート（/）で404エラーを返す
+app.get('/', (req, res) => {
+  res.status(404).send('404 Not Found');
+});
+
+// /bbf40df4d83622e1846b5ddd5cf5d7e4 で掲示板を表示
+app.get('/bbf40df4d83622e1846b5ddd5cf5d7e4', async (req, res) => {
   try {
     const filePath = path.join(__dirname, 'public', 'board_data.json');
     const data = await fs.readFile(filePath, 'utf8');
