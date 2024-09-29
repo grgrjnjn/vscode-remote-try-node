@@ -18,7 +18,10 @@ git update-index --assume-unchanged public/board_data.json
 
 
 Node.js Email App
-jtvh ypyg pgoh fwpz
+
+
+export EMAIL_USER="justanother893@gmail.com"
+export EMAIL_PASS="jtvh ypyg pgoh fwpz"
 
 
 ■TODO

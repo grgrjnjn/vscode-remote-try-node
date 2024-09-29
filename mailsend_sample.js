@@ -17,20 +17,26 @@
 
 
 // yarn add nodemailer
+// yarn add dotenv
 
-// const nodemailer = require('nodemailer');
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // トランスポーターの作成
+    // user: "justanother893@gmail.com", // あなたのGmailアドレス
+    // pass: "jtvh ypyg pgoh fwpz" // あなたのGmailパスワードまたはアプリパスワード
+
 let transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",  // GmailのSMTPサーバーを使用する例
+  host: "smtp.gmail.com",
   port: 587,
   secure: false, // TLS を使用
   auth: {
-    user: "justanother893@gmail.com", // あなたのGmailアドレス
-    pass: "jtvh ypyg pgoh fwpz" // あなたのGmailパスワードまたはアプリパスワード
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
+
 
 // メールオプションの設定
 let mailOptions = {
