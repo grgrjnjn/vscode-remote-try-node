@@ -1,6 +1,8 @@
 // controllers/authController.js
 import crypto from 'crypto';
 import { sendMail } from '../utils/mailer.js';
+import { isValidUser } from '../utils/userValidator.js';
+
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const TOKEN_EXPIRY = 1000 * 60 * 60; // 1時間
@@ -22,6 +24,10 @@ export const sendLoginLink = async (req, res, next) => {
         const token = crypto.randomBytes(32).toString('base64url');
         const csrfToken = crypto.randomBytes(32).toString('base64url');
         
+        if (!(await isValidUser(email))) {
+            return res.status(403).send('このメールアドレスは許可されていません。');
+        }
+
         tokens[token] = { 
             email, 
             expires: Date.now() + TOKEN_EXPIRY,
