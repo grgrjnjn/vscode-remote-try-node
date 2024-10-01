@@ -25,8 +25,9 @@ export EMAIL_USER="justanother893@gmail.com"
 export EMAIL_PASS="jtvh ypyg pgoh fwpz"
 
 export BASE_URL="https://fluffy-giggle-gx9rjvpqq3vj4w-3000.app.github.dev"
-export BASE_URL="https://ik1-447-55534.vs.sakura.ne.jp"
+export BASE_URL="http://ik1-447-55534.vs.sakura.ne.jp"
 
+export PORT=80
 
 
 ・メールアドレスでログインする仕組み
