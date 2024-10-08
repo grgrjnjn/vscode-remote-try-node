@@ -30,97 +30,56 @@
 // 開始時間がいつもピッタリにならないようにランダムなスリープを入れる？
 
 
-
-import { promises as fs } from 'fs';
+// plugin_fetch_kanajo.js
 import path from 'path';
-import { JSDOM } from 'jsdom';
+import { fetchHTML, createJSDOM, saveHTML, createPluginRunner } from './utils.js';
 
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
 const THREAD_URL = 'https://kanajo.com/public/thread/index?id=1';
 const OUTPUT_DIR = 'data/source/html';
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'kanajo.html');
 const MAIL_LINK_PATTERN = /https:\/\/kanajo\.com\/public\/mail\/\?type=comment&id=\d+/;
 
-async function fetchHTML(url) {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT }
-  });
+async function fetchAndSaveKanajoHTML() {
+  const html = await fetchHTML(THREAD_URL);
+  const dom = await createJSDOM(html);
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.text();
-}
-
-{/* async function rewriteHTML(html) {
-  const dom = new JSDOM(html);
+  // ここのコードを工夫
   const links = dom.window.document.querySelectorAll('a');
-
   for (const link of links) {
     if (MAIL_LINK_PATTERN.test(link.href)) {
       const commentHtml = await fetchHTML(link.href);
-      const commentDom = new JSDOM(commentHtml);
+      const commentDom = await createJSDOM(commentHtml);
       const emailLink = commentDom.window.document.querySelector('a[href^="mailto:"]');
       if (emailLink) {
         link.outerHTML = emailLink.outerHTML;
       }
-    }
-  }
-  
-
-  return dom.serialize();
-} */}
-async function rewriteHTML(html) {
-  const dom = new JSDOM(html);
-  const links = dom.window.document.querySelectorAll('a');
-
-  for (const link of links) {
-    if (MAIL_LINK_PATTERN.test(link.href)) {
-      const commentHtml = await fetchHTML(link.href);
-      const commentDom = new JSDOM(commentHtml);
-      const emailLink = commentDom.window.document.querySelector('a[href^="mailto:"]');
-      if (emailLink) {
-        link.outerHTML = emailLink.outerHTML;
-      }
+      commentDom.window.close();
     }
     
-    // 画像リンクの置換
     if (link.href.startsWith('https://kanajo.com/public/thread/img/')) {
       const imgHtml = await fetchHTML(link.href);
-      const imgDom = new JSDOM(imgHtml);
+      const imgDom = await createJSDOM(imgHtml);
       const img = imgDom.window.document.querySelector('img');
       if (img) {
         const srcWithoutQuery = img.src.split('?')[0];
         link.outerHTML = `<img src="${srcWithoutQuery}" alt="">`;
       }
+      imgDom.window.close();
     }
   }
 
-  return dom.serialize();
+  const finalHTML = dom.serialize();
+  await saveHTML(finalHTML, OUTPUT_FILE);
+
+  // リソースを解放
+  dom.window.close();
+
+  return `Kanajo HTMLが保存されました: ${OUTPUT_FILE}`;
 }
 
-async function saveHTML(html, fileName) {
-  // 出力ディレクトリが存在しない場合は作成
-  await fs.mkdir(path.dirname(fileName), { recursive: true });
-  await fs.writeFile(fileName, html);
-}
-
-export async function run() {
-  try {
-    const html = await fetchHTML(THREAD_URL);
-    const rewrittenHTML = await rewriteHTML(html);
-    await saveHTML(rewrittenHTML, OUTPUT_FILE);
-    return `Kanajo HTMLが保存されました: ${OUTPUT_FILE}`;
-  } catch (error) {
-    console.error('処理中にエラーが発生しました:', error);
-    return `エラー: ${error.message}`;
-  }
-}
+export const run = createPluginRunner(fetchAndSaveKanajoHTML);
 
 // 単体実行用のコード
 if (import.meta.url === `file://${process.argv[1]}`) {
-  run()
-    .then(result => console.log(result))
-    .catch(error => console.error('エラー:', error));
+  run().then(console.log).catch(console.error);
 }
