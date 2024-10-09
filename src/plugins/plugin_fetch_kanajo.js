@@ -1,8 +1,10 @@
 // plugins/fetch_kanajo_plugin.js
 
+// importを使う
+// JSDOMを使う
+
+// 動作
 // リンク先のメールアドレスを取得してHTMLを書き換える
-// シンプルな実装でgood
-// ES modules形式
 
 // HTMLテキストに、以下のようなaタグで囲まれたimgタグが複数ある。
 // <a href="https://kanajo.com/public/thread/img/*"><img width="48px" height="64px" src="http://kanajo.com/public/assets/img/bbs/*" alt=""></a>
@@ -30,23 +32,29 @@
 // 開始時間がいつもピッタリにならないようにランダムなスリープを入れる？
 
 
-// plugin_fetch_kanajo.js
+// plugins/fetch_kanajo_plugin.js
 import path from 'path';
 import { fetchHTML, createJSDOM, saveHTML, createPluginRunner } from './utils.js';
 
-const THREAD_URL = 'https://kanajo.com/public/thread/index?id=1';
-const OUTPUT_DIR = 'data/source/html';
-const OUTPUT_FILE = path.join(OUTPUT_DIR, 'kanajo.html');
-const MAIL_LINK_PATTERN = /https:\/\/kanajo\.com\/public\/mail\/\?type=comment&id=\d+/;
+const CONFIG = {
+  URL: 'https://kanajo.com/public/thread/index?id=1',
+  OUTPUT_DIR: 'data/source/html',
+  OUTPUT_FILE: 'kanajo.html',
+  WAIT_TIME: 5000, // 5秒
+  MAIL_LINK_PATTERN: /https:\/\/kanajo\.com\/public\/mail\/\?type=comment&id=\d+/,
+  IMAGE_LINK_PREFIX: 'https://kanajo.com/public/thread/img/'
+};
 
 async function fetchAndSaveKanajoHTML() {
-  const html = await fetchHTML(THREAD_URL);
+  const html = await fetchHTML(CONFIG.URL);
   const dom = await createJSDOM(html);
 
-  // ここのコードを工夫
+  // ページの読み込みと追加の待機時間
+  await new Promise(resolve => setTimeout(resolve, CONFIG.WAIT_TIME));
+
   const links = dom.window.document.querySelectorAll('a');
   for (const link of links) {
-    if (MAIL_LINK_PATTERN.test(link.href)) {
+    if (CONFIG.MAIL_LINK_PATTERN.test(link.href)) {
       const commentHtml = await fetchHTML(link.href);
       const commentDom = await createJSDOM(commentHtml);
       const emailLink = commentDom.window.document.querySelector('a[href^="mailto:"]');
@@ -56,7 +64,7 @@ async function fetchAndSaveKanajoHTML() {
       commentDom.window.close();
     }
     
-    if (link.href.startsWith('https://kanajo.com/public/thread/img/')) {
+    if (link.href.startsWith(CONFIG.IMAGE_LINK_PREFIX)) {
       const imgHtml = await fetchHTML(link.href);
       const imgDom = await createJSDOM(imgHtml);
       const img = imgDom.window.document.querySelector('img');
@@ -69,12 +77,13 @@ async function fetchAndSaveKanajoHTML() {
   }
 
   const finalHTML = dom.serialize();
-  await saveHTML(finalHTML, OUTPUT_FILE);
+  const outputPath = path.join(CONFIG.OUTPUT_DIR, CONFIG.OUTPUT_FILE);
+  await saveHTML(finalHTML, outputPath);
 
   // リソースを解放
   dom.window.close();
 
-  return `Kanajo HTMLが保存されました: ${OUTPUT_FILE}`;
+  return `Kanajo HTMLが保存されました: ${outputPath}`;
 }
 
 export const run = createPluginRunner(fetchAndSaveKanajoHTML);
@@ -83,3 +92,5 @@ export const run = createPluginRunner(fetchAndSaveKanajoHTML);
 if (import.meta.url === `file://${process.argv[1]}`) {
   run().then(console.log).catch(console.error);
 }
+
+
