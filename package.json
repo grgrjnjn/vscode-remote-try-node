@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "description": "Node.js on Docker",
   "author": "First Last <first.last@example.com>",
+  "type": "module",
   "main": "server.js",
   "private": true,
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "fetch-cookie": "^3.1.0",
+    "jsdom": "^26.1.0",
+    "node-fetch": "^3.3.2",
+    "tough-cookie": "^5.1.2"
   }
 }
